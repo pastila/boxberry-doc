@@ -1,0 +1,396 @@
+---
+swagger: "2.0"
+info:
+  title: Boxberry
+  version: 1.0.0
+paths:
+  /reviews/add/:
+    post:
+      consumes:
+      - multipart/form-data
+      produces:
+      - application/json
+      parameters:
+      - name: parcel_id
+        description: ""
+        in: formData
+        required: false
+        type: integer
+      - name: type
+        description: формат
+        in: formData
+        required: true
+        type: string
+        enum:
+        - offer
+        - compliment
+        - scold
+        - rate
+      - name: about
+        description: Заполняется автоматически??
+        in: formData
+        required: false
+        type: string
+        enum:
+        - parcel
+        - company
+      - name: text
+        description: ""
+        in: formData
+        required: true
+        type: string
+      - name: down_reason
+        description: Вторая причина =\
+        in: formData
+        type: string
+      - name: rate
+        description: 1-5
+        in: formData
+        required: true
+        type: integer
+      responses:
+        200:
+          description: Успешно или не успешно
+      summary: Добавить отзыв
+  /directrequest/location/default/autocomplete/:
+    get:
+      produces:
+      - application/json
+      parameters:
+      - name: term
+        description: ""
+        in: query
+        required: true
+        type: string
+      responses:
+        200:
+          description: Список городов
+          schema:
+            type: array
+            items:
+              type: string
+      summary: Автодополнение городов
+  /directrequest/location/default/get-city-id-by-city-title/:
+    post:
+      parameters:
+      - name: body
+        description: Название города
+        schema:
+          type: object
+          properties:
+            city:
+              description: Название города
+              type: string
+        in: body
+        required: true
+      responses:
+        200:
+          description: id города
+          schema:
+            type: object
+            properties:
+              id:
+                description: id города
+                type: integer
+        500:
+          description: Город не найден
+      summary: Получение id города по его названию
+  /directrequest/location/default/get-list-offices/:
+    get:
+      parameters:
+      - name: cityId
+        description: Идентификатор города
+        in: query
+        type: integer
+      - name: filter
+        description: |-
+          Фильтр по отделению
+          sender (отделение может принять ПиП), courier (отделение может выдать ПиП), receiver (отделение имеет КД)
+        in: query
+        type: string
+        enum:
+        - sender
+        - courier
+        - receiver
+      responses:
+        200:
+          description: Список ПВЗ
+          schema:
+            type: object
+            properties:
+              renderOfficeListBlock:
+                description: Какой-то отрендеренный блок с ПВЗ
+                type: string
+              objectManager:
+                type: object
+                properties:
+                  type:
+                    description: FeatureCollection
+                    type: string
+                  features:
+                    description: Коллекция ПВЗ
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        type:
+                          description: Feature
+                          type: string
+                        id:
+                          description: Идентификатор ПВЗ
+                          type: integer
+                        geometry:
+                          description: Данные местоположения
+                          type: object
+                          properties:
+                            type:
+                              description: Point
+                              type: string
+                            coordinates:
+                              type: array
+                              items:
+                                type: number
+                              example:
+                              - "56.914561"
+                              - "60.822628"
+                        properties:
+                          type: object
+                          properties:
+                            id:
+                              description: Идентификатор ПВЗ
+                              type: integer
+                            city:
+                              description: Название города
+                              type: string
+                            acquiring:
+                              description: Есть возможность оплаты банковскими картами
+                              type: boolean
+                            pip_reception:
+                              description: Отделение может принять ПиП
+                              type: boolean
+                            pip_issuance:
+                              description: Отделение может выдать ПиП
+                              type: boolean
+                            area:
+                              description: Регион
+                              type: string
+                            weekends:
+                              description: Работает по выходным
+                              type: boolean
+                            without_lunch:
+                              description: Без обеда
+                              type: boolean
+                            to_18:
+                              description: Работает до 18
+                              type: boolean
+                            to_19:
+                              description: Работает до 19
+                              type: boolean
+      summary: Получение ПВЗ
+  /directrequest/location/default/get-office-info/:
+    post:
+      parameters:
+      - name: body
+        schema:
+          type: object
+          properties:
+            id:
+              description: Идентификатор ПВЗ
+              type: integer
+        in: body
+        required: true
+      responses:
+        200:
+          description: Данные о ПВЗ
+          schema:
+            type: object
+            properties:
+              content:
+                type: object
+                properties:
+                  id:
+                    description: Идентификатор ПВЗ
+                    type: integer
+                  gps:
+                    type: string
+                  title:
+                    description: Название
+                    type: string
+                  address:
+                    description: Адрес
+                    type: string
+                  phone:
+                    description: Номер телефона
+                    type: string
+                  work_schedule:
+                    description: Время работы ПВЗ
+                    type: string
+                  render:
+                    description: Какой-то отрендеренный блок ПВЗ
+                    type: string
+        404:
+          description: ПВЗ не найден
+      summary: Получение информации о ПВЗ
+  /directrequest/location/default/set-office/:
+    get:
+      parameters:
+      - name: officeId
+        description: Идентификатор ПВЗ
+        in: query
+        required: true
+        type: integer
+      responses:
+        200:
+          description: ПВЗ выбран
+      summary: Выбрать ПВЗ
+  /parcels/{parcelId}/forwarding/cost/:
+    post:
+      consumes:
+      - multipart/form-data
+      produces:
+      - application/json
+      parameters:
+      - name: type_pay
+        description: Способ оплаты. online - сразу оплатить. offline - добавить к
+          стоимости
+        in: formData
+        required: true
+        type: string
+        enum:
+        - online
+        - offline
+      - name: courierDelivery
+        description: Доствака курьером
+        in: formData
+        type: boolean
+      - name: forwarding_id
+        description: Идентификатор запроса
+        in: formData
+        type: integer
+      - name: address
+        description: Адрес доставки. Обязательно для доставки курьером
+        in: formData
+        type: string
+      responses:
+        200:
+          description: Результат запроса
+          schema:
+            type: object
+            properties:
+              success:
+                description: Результат запроса стоимости
+                type: boolean
+              delay:
+                description: Задержка
+                type: string
+              cost:
+                description: Стоимость смены
+                type: number
+              currency:
+                description: Валюта
+                type: string
+              forwardingSave:
+                description: Запрос стоимости
+                type: object
+                properties:
+                  id:
+                    description: Идентификатор запроса стоимости
+                    type: integer
+                  date:
+                    description: Дата создания
+                    type: string
+                  type:
+                    description: Тип запроса query, order
+                    type: string
+                  courierDelivery:
+                    description: Доставка курьером
+                    type: boolean
+                  address:
+                    description: Адрес
+                    type: string
+                  type_pay:
+                    description: Способ оплаты online, offline
+                    enum:
+                    - online
+                    - offline
+                    type: string
+              errors:
+                type: array
+                items:
+                  description: Текст ошибки
+                  type: string
+        404:
+          description: Посылка не найдена
+        500:
+          description: Что-то пошло не так
+      summary: Запрос стоимости переадресации посылки
+      description: Для расчета стоимости переадресации посылки для НЕ курьерской доставки,
+        необходимо сначала выбрать ПВЗ с помощью запроса /directrequest/location/default/set-office/
+    parameters:
+    - name: parcelId
+      description: Идентификатор посылки
+      in: path
+      required: true
+      type: integer
+  /parcels/{parcelId}/forwarding/order/:
+    post:
+      consumes:
+      - multipart/form-data
+      produces:
+      - application/json
+      parameters:
+      - name: forwarding_id
+        description: Идентификатор запроса переадресации
+        in: formData
+        required: true
+        type: integer
+      - name: type_pay
+        description: Способ оплаты
+        in: formData
+        required: true
+        type: string
+        enum:
+        - online
+        - offline
+      - name: courierDelivery
+        description: Доставка курьером
+        in: formData
+        required: false
+        type: boolean
+      - name: address
+        description: Адрес доставки, обязательный для курьерской доставки
+        in: formData
+        type: string
+      - name: addressIndex
+        description: Почтовый индекс
+        in: formData
+        type: string
+      responses:
+        200:
+          description: Заказ переадресации выполнен
+          schema:
+            type: object
+            properties:
+              paymentFormUrl:
+                description: url Формы оплаты
+                type: string
+              success:
+                description: Статус выполнения
+                type: bollean
+              errors:
+                description: 'Массив ошибок key: value'
+                type: object
+                properties:
+                  error:
+                    type: array
+                    items:
+                      type: string
+        404:
+          description: Посылка не найдена
+      summary: Заказ услуги переадресация посылки
+    parameters:
+    - name: parcelId
+      description: Идентификатор посылки
+      in: path
+      required: true
+      type: integer
